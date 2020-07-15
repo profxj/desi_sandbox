@@ -100,6 +100,6 @@ def calcsignoise(subset = False, path = "/Volumes/GoogleDrive/My Drive/andes/til
 
 # Command line execution
 if __name__ == '__main__':
-    calcsignoise(subset=True, path='/home/xavier/DESI/DESI_SCRATCH/tiles/',
-                 outfile='/home/xavier/DESI/DESI_SCRATCH/Huge_Table.fits', plot=False)
+    calcsignoise(subset=True, path='/Volumes/GoogleDrive/My Drive/andes/tiles/',
+                 outfile='/Volumes/GoogleDrive/My Drive/Huge_Table.fits, plot=False)
 
