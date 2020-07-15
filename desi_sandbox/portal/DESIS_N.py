@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-%matplotlib inline
+
 from numpy.linalg import inv
 
 from astropy.table import Table, Column, vstack, hstack
@@ -11,7 +11,9 @@ from astropy.io import fits, ascii
 import glob
 import os
 
-def calcsignoise(subset = False, path = "/Volumes/GoogleDrive/My Drive/andes/tiles/"):
+def calcsignoise(subset = False, path = "/Volumes/GoogleDrive/My Drive/andes/tiles/",
+                 outfile='/Volumes/GoogleDrive/My Drive/Huge_Table.fits',
+                 plot=False, verbose=False):
 
     all_files = glob.glob(os.path.join(path,"*/*/spectra*fits"))  # takes the each spectra file
     z_files = glob.glob(os.path.join(path,"*/*/zbest*fits"))  # takes each zbest files
@@ -57,17 +59,19 @@ def calcsignoise(subset = False, path = "/Volumes/GoogleDrive/My Drive/andes/til
             r_sigma = np.sqrt(r_var)  # takes the var values and takes the sqaure root of each of the values in the array
             r_sig_noise = rflux/r_sigma # divides flux by sigma to get S/N
 
-            plt.plot(r_wave, r_sig_noise)  # this plots the S/N against the wavelength
+            if plot:
+                plt.plot(r_wave, r_sig_noise)  # this plots the S/N against the wavelength
 
             r_SN_med = np.median(r_sig_noise)  # this takes the median S/N to the plot
             median_array = np.append(median_array, r_SN_med)  # this appends the median S/N to the empty array created earlier
 
 
-        plt.title('Spectrum %s' %i, fontsize = 15)  #  places a title and sets font size
-        plt.xlabel('Wavelength', fontsize = 15)   # places a label on the x axis and sets font size
-        plt.ylabel('S/N', fontsize = 15) # places a label on the y axis and sets font size
+        if plot:
+            plt.title('Spectrum %s' %i, fontsize = 15)  #  places a title and sets font size
+            plt.xlabel('Wavelength', fontsize = 15)   # places a label on the x axis and sets font size
+            plt.ylabel('S/N', fontsize = 15) # places a label on the y axis and sets font size
 
-        plt.show()
+            plt.show()
 
         z = Table()     # creates an empty table
         z['Z'] = spec_z['Z']   # adds this column from zbest table to the empty table we created
@@ -80,12 +84,22 @@ def calcsignoise(subset = False, path = "/Volumes/GoogleDrive/My Drive/andes/til
         table = hstack([t, z])   # combines both z and t to one table
 
         new_tables.append(table)  # this appends the table we made above to our empty table "new_tables"
+
     all_tables = vstack(new_tables)  # stacks each of the table together vertically
 
-    print(all_tables)
+    # Print?
+    if verbose:
+        print(all_tables)
 
-    all_tables.write('/Volumes/GoogleDrive/My Drive/Huge_Table.fits', overwrite=True)
+    # Write
+    all_tables.write(outfile, overwrite=True)
 
 #    t_table = Table.read('/Volumes/GoogleDrive/My Drive/Huge_Table.fits')
 
 #    t_table
+
+# Command line execution
+if __name__ == '__main__':
+    calcsignoise(subset=True, path='/home/xavier/DESI/DESI_SCRATCH/tiles/',
+                 outfile='/home/xavier/DESI/DESI_SCRATCH/Huge_Table.fits', plot=False)
+
