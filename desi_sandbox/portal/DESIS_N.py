@@ -29,7 +29,7 @@ def calcsignoise(subset = False, path = "/Volumes/GoogleDrive/My Drive/andes/til
     sub_zfiles.sort()
 
     new_tables = []   # creates an empty table
-    for i in range(0,657):  # to go through each file, we need a for loop
+    for i in range(0,6):  # to go through each file, we need a for loop
         spec = Table.read(sub_files[i]) # reads the i file table
         hdul = fits.open(sub_files[i])  # opens the fit data that belongs to the i sub_file and gets the information from that file
 
@@ -100,6 +100,6 @@ def calcsignoise(subset = False, path = "/Volumes/GoogleDrive/My Drive/andes/til
 
 # Command line execution
 if __name__ == '__main__':
-    calcsignoise(subset=False, path='/Volumes/GoogleDrive/My Drive/andes/tiles/',
+    calcsignoise(subset= True, path='/Volumes/GoogleDrive/My Drive/andes/tiles/',
                  outfile='/Volumes/GoogleDrive/My Drive/Huge_Table.fits', plot=False)
 
