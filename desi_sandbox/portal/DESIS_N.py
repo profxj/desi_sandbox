@@ -29,7 +29,7 @@ def calcsignoise(subset = False, path = "/Volumes/GoogleDrive/My Drive/andes/til
     sub_zfiles.sort()
 
     new_tables = []   # creates an empty table
-    for i in range(0,6):  # to go through each file, we need a for loop
+    for i in range(0,len(sub_files)):  # to go through each file, we need a for loop
         spec = Table.read(sub_files[i]) # reads the i file table
         hdul = fits.open(sub_files[i])  # opens the fit data that belongs to the i sub_file and gets the information from that file
 
@@ -51,7 +51,7 @@ def calcsignoise(subset = False, path = "/Volumes/GoogleDrive/My Drive/andes/til
 
         median_array = np.array([])  # this creates an empty array to use later
 
-        for n in range(0,500):  # this is to create the plot. A for loop is needed to go through each array and plot wavelength vs s/n
+        for n in range(0,len(r_flux)):  # this is to create the plot. A for loop is needed to go through each array and plot wavelength vs s/n
             rflux = r_flux[n,:]  # takes the i flux value one column at a time
             rivar = r_ivar[n,:]  # takes the i ivar value one column at a time
 
