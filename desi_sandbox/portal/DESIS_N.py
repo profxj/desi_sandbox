@@ -29,7 +29,7 @@ def calcsignoise(subset = False, path = "/Volumes/My Passport for Mac/andes/tile
     sub_zfiles.sort()
 
     new_tables = []   # creates an empty table
-    for i in range(0,3):  # to go through each file, we need a for loop
+    for i in range(0,len(all_files):  # to go through each file, we need a for loop
         spec = Table.read(sub_files[i]) # reads the i file table
         hdul = fits.open(sub_files[i])  # opens the fit data that belongs to the i sub_file and gets the information from that file
 
