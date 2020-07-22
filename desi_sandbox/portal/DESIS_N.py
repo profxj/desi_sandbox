@@ -11,10 +11,9 @@ from astropy.io import fits, ascii
 import glob
 import os
 
-def calcsignoise(subset = False, path = "/Volumes/My Passport for Mac/andes/tiles/",
-                 outfile='/Volumes/My Passport for Mac/Huge_Table.fits',
+def calcsignoise(subset = False, path = "/Volumes/GoogleDrive/My Drive/andes/tiles/",
+                 outfile='/Volumes/GoogleDrive/My Drive/Huge_Table.fits',
                  plot=False, verbose=False):
-
     all_files = glob.glob(os.path.join(path,"*/*/spectra*fits"))  # takes the each spectra file
     z_files = glob.glob(os.path.join(path,"*/*/zbest*fits"))  # takes each zbest files
 
@@ -100,6 +99,6 @@ def calcsignoise(subset = False, path = "/Volumes/My Passport for Mac/andes/tile
 
 # Command line execution
 if __name__ == '__main__':
-    calcsignoise(subset= True, path='/Volumes/My Passport for Mac/andes/tiles/',
-                 outfile='/Volumes/My Passport for Mac/Huge_Table.fits', plot=False)
+    calcsignoise(subset= True, path='/Volumes/GoogleDrive/My Drive/andes/tiles/',
+                 outfile='/Volumes/GoogleDrive/My Drive/Huge_Table.fits', plot=False)
 
