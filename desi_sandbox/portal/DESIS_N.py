@@ -28,7 +28,7 @@ def calcsignoise(subset = False, path = "/Volumes/GoogleDrive/My Drive/andes/til
     sub_zfiles.sort()
 
     new_tables = []   # creates an empty table
-    for i in range(0,6):  # to go through each file, we need a for loop, when ready change range to len of 
+    for i in range(0,9):  # to go through each file, we need a for loop, when ready change range to len of 
         spec = Table.read(sub_files[i]) # reads the i file table
         hdul = fits.open(sub_files[i])  # opens the fit data that belongs to the i sub_file and gets the information from that file
 
