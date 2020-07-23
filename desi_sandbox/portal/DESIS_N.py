@@ -102,3 +102,13 @@ if __name__ == '__main__':
     calcsignoise(subset= True, path='/Volumes/GoogleDrive/My Drive/andes/tiles/',
                  outfile='/Volumes/GoogleDrive/My Drive/Huge_Table.fits', plot=False)
 
+idx = obs['SPECTYPE'] == 'GALAXY'  
+idx_1 = idx & (obs['Z'] < 0.3) 
+
+obs_idx = obs[idx_1]
+
+sort = obs_idx[np.argsort(obs_idx['S_N_r'])]
+
+sort.write('/Volumes/GoogleDrive/My Drive/OtherHuge_Table.fits', overwrite=True)
+
+sort__table = Table.read('/Volumes/GoogleDrive/My Drive/OtherHuge_Table.fits')
