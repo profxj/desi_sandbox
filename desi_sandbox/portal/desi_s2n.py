@@ -9,6 +9,8 @@ from astropy.io import fits
 import glob
 import os
 
+from desi_sandbox import utils as dsbox_utils
+
 from IPython import embed
 
 def calc_tile_sn(subset = False, path = "/Volumes/My Passport for Mac/andes/tiles/",
@@ -48,7 +50,9 @@ def calc_tile_sn(subset = False, path = "/Volumes/My Passport for Mac/andes/tile
         #
         hdul = fits.open(sub_files[i])  # opens the fit data that belongs to the i sub_file and gets the information from that file
 
-        spec_z = Table.read(sub_zfiles[i])  # reads the i file table
+        hdul_specz = fits.open(sub_zfiles[i])  # reads the i file table
+        spec_z = Table(hdul_specz['ZBEST'].data)
+        fiber_z = Table(hdul_specz['FIBERMAP'].data)
 
         flux = hdul['{:s}_FLUX'.format(camera)].data  # Takes the chosen row of the hdul file
         ivar = hdul['{:s}_IVAR'.format(camera)].data  # Takes the chosen row of the hdul file
@@ -87,10 +91,14 @@ def calc_tile_sn(subset = False, path = "/Volumes/My Passport for Mac/andes/tile
         z['ZWARN'] = spec_z['ZWARN']   # adds this column from zbest table to the empty table we created
         z['SPECTYPE'] = spec_z['SPECTYPE']   # adds this column from zbest table to the empty table we created
 
+        #
         t = Table(hdul['FIBERMAP'].data)    # takes the table spec and assigns to t
         t['S_N_{:s}'.format(camera.lower())] = S_N
 
-        table = hstack([t, z])   # combines both z and t to one table
+        # Match the fiber ids
+        idx = dsbox_utils.match_ids(fiber_z['FIBER'], t['FIBER'])
+
+        table = hstack([t, z[idx]])   # combines both z and t to one table
 
         new_tables.append(table)  # this appends the table we made above to our empty table "new_tables"
 
