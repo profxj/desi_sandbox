@@ -1,3 +1,4 @@
+""" Code calculate S/N from a DESI dataset of tiles"""
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -10,7 +11,7 @@ import os
 
 from IPython import embed
 
-def calcsignoise(subset = False, path = "/Volumes/My Passport for Mac/andes/tiles/",
+def calc_tile_sn(subset = False, path = "/Volumes/My Passport for Mac/andes/tiles/",
                  outfile='/Volumes/My Passport for Mac/Huge_Table.fits',
                  camera='R',
                  plot=False, verbose=False):
@@ -112,11 +113,11 @@ def calcsignoise(subset = False, path = "/Volumes/My Passport for Mac/andes/tile
 if __name__ == '__main__':
     # Madalyn
     if False:
-        calcsignoise(subset= True, path='/Volumes/My Passport for Mac/andes/tiles/',
+        calc_tile_sn(subset= True, path='/Volumes/My Passport for Mac/andes/tiles/',
                  outfile='/Volumes/My Passport for Mac/Huge_Table.fits', plot=False)
 
     # JXP
-    calcsignoise(path=os.path.join(os.getenv('DESI_ANDES'), 'tiles'),
+    calc_tile_sn(path=os.path.join(os.getenv('DESI_ANDES'), 'tiles'),
                  outfile=os.path.join(os.getenv('DESI_UMAP'), 'andes_S2N_spec.fits'), plot=False)
 
     if False:
