@@ -1,12 +1,17 @@
 """ Codes to preprocess a list of DESI spectra
 Follows/adopts/adapts codes by Itamar Reis
 """
+import os
 
 import numpy as np
 from scipy.signal import medfilt
 from scipy.interpolate import interp1d
 from numba import njit
-import tqdm
+
+from astropy.io import fits
+from astropy.table import Table
+
+from IPython import embed
 
 
 @njit
@@ -37,10 +42,76 @@ def remove_outliers_and_nans(s, s_):
 
     return s_
 
-def load_spec(targ_tbl, path="/Volumes/My Passport for Mac/andes/tiles/"):
+
+def load_spec(targ_tbl, outfile, camera='R'):
+    """
+    Load the spectra for a given camera and write to a Numpy file
+
+    Args:
+        targ_tbl (astropy.table.Table):
+        outfile (str):
+        camera (str, optional:
+    """
+
+    tileid = []  # creates an empty array
+    for row in targ_tbl:
+        file = str(row['PETAL_LOC']) + '-' + str(row['TILEID']) + '-' + str(row[
+                                                                                'NIGHT'])  # goes through each element of the array and grabs the wanted elements of each one. This then combines them in the right format
+        file_tileid = str(row['TILEID']) + '/' + str(row[
+                                                         'NIGHT']) + '/coadd-' + file  # this grabs the necessary element of each array and combines them to make part of our path in the next cell
+        tileid.append(file_tileid)  # appends the file created above to them empty array
+
+    # this combines all of the elements grabbed above to make a filepath
+    path = os.path.join(os.getenv('DESI_ANDES'), 'tiles')
+    files = [os.path.join(path, x+'.fits') for x in tileid]
+
+    FIBER = targ_tbl['FIBER'].data  # Takes the chosen row of the hdul file
 
     # Loop on the spectra
-    pass
+    all_flux, all_ivar, all_wave = [], [], []
+    for i, ifile in enumerate(files):
+        # opens the fit data that belongs to the i sub_file and gets the information from that file
+        if (i % 100) == 0:
+            print('i = ', i)
+        hdul = fits.open(ifile)
+
+        wave = hdul['{:s}_WAVELENGTH'.format(camera)].data  # Takes the chosen row of the hdul file
+        flux = hdul['{:s}_FLUX'.format(camera)].data  # Takes the chosen row of the hdul file
+        ivar = hdul['{:s}_IVAR'.format(camera)].data  # Takes the chosen row of the hdul file
+        fibermap = hdul['FIBERMAP'].data  # Takes the chosen row of the hdul file
+
+        fibers = fibermap['FIBER']
+
+        #     print(FIBER[i])     # prints each element of FIBER
+        index = np.where(np.in1d(fibers, FIBER[i]))  # grabs index is where fibers and FIBER matches
+        index_ = index[0]  # converts the first element of the tuple created and converts it to a list.
+        #     print(index_[0])  # prints the first element of the list
+
+        # Save
+        all_flux.append(flux[index_[0], :])  # plugs in the index found above and finds the matching spectrum
+        all_ivar.append(ivar[index_[0], :])  # plugs in the index found above and finds the matching spectrum
+        all_wave.append(wave)
+
+        # Cleanup
+        for key in ['{:s}_WAVELENGTH'.format((camera)),
+                    '{:s}_FLUX'.format((camera)),
+                    '{:s}_IVAR'.format((camera)),
+                    'FIBERMAP'.format((camera))]:
+            del hdul[key].data
+        del wave, flux, ivar, fibermap, fibers
+        hdul.close()
+
+    # Concatenate
+    flux = np.concatenate(all_flux).reshape((len(targ_tbl), all_flux[0].size))
+    del all_flux
+    ivar = np.concatenate(all_ivar).reshape((len(targ_tbl), all_ivar[0].size))
+    del all_ivar
+    wave = np.concatenate(all_wave).reshape((len(targ_tbl), all_wave[0].size))
+    del all_wave
+
+    # saves the multiple arrays to one file
+    np.savez_compressed(outfile, flux=flux, ivar=ivar, wave=wave, overwrite=True)
+    print("Wrote: {:s}".format(outfile))
 
 def rest_and_rebin(spec_file, targ_tbl):
     pass
@@ -124,3 +195,12 @@ def rebin(wavelength, flux, new_wavelength):
 
     return new_fx
 
+# Command line execution
+if __name__ == '__main__':
+    # JXP
+    high_SN_table_file = os.path.join(os.getenv('DESI_UMAP'), 'andes_glxy_zLT03.fits')
+    spec_r_file = os.path.join(os.getenv('DESI_UMAP'), 'andes_glxy_zLT03_r.npz')
+
+    # Load/write em all (not just 1000)
+    high_SN = Table.read(high_SN_table_file)
+    load_spec(high_SN, spec_r_file)
