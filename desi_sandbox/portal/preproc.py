@@ -2,6 +2,7 @@
 Follows/adopts/adapts codes by Itamar Reis
 """
 import os
+import gc
 
 import numpy as np
 from scipy.signal import medfilt
@@ -88,9 +89,9 @@ def load_spec(targ_tbl, outfile, camera='R'):
         #     print(index_[0])  # prints the first element of the list
 
         # Save
-        all_flux.append(flux[index_[0], :])  # plugs in the index found above and finds the matching spectrum
-        all_ivar.append(ivar[index_[0], :])  # plugs in the index found above and finds the matching spectrum
-        all_wave.append(wave)
+        all_flux.append(flux[index_[0], :].astype(np.float32))  # plugs in the index found above and finds the matching spectrum
+        all_ivar.append(ivar[index_[0], :].astype(np.float32))  # plugs in the index found above and finds the matching spectrum
+        all_wave.append(wave.copy())
 
         # Cleanup
         for key in ['{:s}_WAVELENGTH'.format((camera)),
@@ -100,6 +101,7 @@ def load_spec(targ_tbl, outfile, camera='R'):
             del hdul[key].data
         del wave, flux, ivar, fibermap, fibers
         hdul.close()
+        gc.collect()
 
     # Concatenate
     flux = np.concatenate(all_flux).reshape((len(targ_tbl), all_flux[0].size))
