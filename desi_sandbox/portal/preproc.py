@@ -7,7 +7,7 @@ import gc
 import numpy as np
 from scipy.signal import medfilt
 from scipy.interpolate import interp1d
-from numba import njit
+from numba import njit, prange
 
 from astropy.io import fits
 from astropy.table import Table
@@ -15,16 +15,19 @@ from astropy.table import Table
 from IPython import embed
 
 
-@njit
-def remove_outliers_and_nans(s, s_):
+@njit(parallel=True)
+def remove_outliers_and_nans(s, s_, ivar):
     ####
-
     # Use nearby pixels to remove 3 sigma outlires and nans
-
     ###
+
+    # Nan me
+    s[ivar <= 0] = np.nan
+    s_[ivar <= 0] = np.nan
+
     nof_features = s.size
     d = 5
-    for f in range(d, nof_features - d):
+    for f in prange(d, nof_features - d):
         val = s[f]
         leave_out = np.concatenate((s[f - d:f], s[f + 1:f + d]))
         leave_out_mean = np.nanmean(leave_out)
@@ -115,6 +118,34 @@ def load_spec(targ_tbl, outfile, camera='R'):
     np.savez_compressed(outfile, flux=flux, ivar=ivar, wave=wave, overwrite=True)
     print("Wrote: {:s}".format(outfile))
 
+def clean_spec(raw_spec_file, cleaned_spec_file, nmedian=5):
+
+    # Load
+    specz = np.load(raw_spec_file)
+    flux = specz['flux']
+    ivar = specz['ivar']
+
+    specs_final = np.zeros(flux.shape)
+    for i in range(flux.shape[0]):
+        if np.sum(ivar[i] <= 0) > 100:
+            print('Spectrum {} is junk'.format(i))
+            specs_final[i] = np.nan
+            continue
+        #if (i % 100 == 0):
+        #    print('i = ', i, np.sum(ivar[i] <= 0))
+        s = flux[i].copy()
+        s_ = s.copy()
+        # remove outliers and nans
+        specs_final[i] = remove_outliers_and_nans(s, s_, ivar[i])
+        # 5 pixel median filter (to remove some of the noise)
+        specs_final[i] = medfilt(specs_final[i], nmedian)
+
+    # saves the multiple arrays to one file
+    np.savez_compressed(cleaned_spec_file, flux=flux, wave=specz['wave'], overwrite=True)
+    print("Wrote: {:s}".format(cleaned_spec_file))
+
+
+
 def rest_and_rebin(spec_file, targ_tbl):
     pass
 
@@ -199,10 +230,18 @@ def rebin(wavelength, flux, new_wavelength):
 
 # Command line execution
 if __name__ == '__main__':
-    # JXP
+
+    # Files
     high_SN_table_file = os.path.join(os.getenv('DESI_UMAP'), 'andes_glxy_zLT03.fits')
-    spec_r_file = os.path.join(os.getenv('DESI_UMAP'), 'andes_glxy_zLT03_r.npz')
+    spec_r_file = os.path.join(os.getenv('DESI_UMAP'), 'andes_glxy_zLT03_rspec.npz')
+    spec_r_clean_file = os.path.join(os.getenv('DESI_UMAP'), 'andes_glxy_zLT03_rspec_clean.npz')
+
+    # Load galaxy table
+    high_SN = Table.read(high_SN_table_file)
 
     # Load/write em all (not just 1000)
-    high_SN = Table.read(high_SN_table_file)
-    load_spec(high_SN, spec_r_file)
+    if False:
+        load_spec(high_SN, spec_r_file)
+
+    # Clean
+    clean_spec(spec_r_file, spec_r_clean_file)
