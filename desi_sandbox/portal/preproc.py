@@ -182,7 +182,7 @@ def rest_and_rebin(spec_file, targ_tbl, outfile, wvpar=(4000., 8000., 4000), deb
         if (i % 1000 == 0):
             print('rest_and_rebin: i = ', i)
         # Bad spectrum?
-        if np.all(flux[i] == 0):
+        if np.all(flux[i] == 0) or np.any(np.isnan(flux[i])):
             print('Bad spectrum: {}'.format(i))
             keep[i] = False
             continue
@@ -281,4 +281,5 @@ if __name__ == '__main__':
         clean_spec(spec_r_file, spec_r_clean_file)
 
     # Rest/rebin
-    rest_and_rebin(spec_r_clean_file, galxy_tbl, spec_r_final_file)#, debug=True)
+    if True:
+        rest_and_rebin(spec_r_clean_file, galxy_tbl, spec_r_final_file)#, debug=True)
