@@ -6,8 +6,9 @@ import gc
 
 import numpy as np
 from scipy.signal import medfilt
-from scipy.interpolate import interp1d
 from numba import njit, prange
+
+from matplotlib import pyplot as plt
 
 from astropy.io import fits
 from astropy.table import Table
@@ -118,7 +119,18 @@ def load_spec(targ_tbl, outfile, camera='R'):
     np.savez_compressed(outfile, flux=flux, ivar=ivar, wave=wave, overwrite=True)
     print("Wrote: {:s}".format(outfile))
 
+
 def clean_spec(raw_spec_file, cleaned_spec_file, nmedian=5):
+    """
+
+    Args:
+        raw_spec_file (str):
+        cleaned_spec_file (str):
+        nmedian (int, optional):
+
+    Returns:
+
+    """
 
     # Load
     specz = np.load(raw_spec_file)
@@ -146,8 +158,49 @@ def clean_spec(raw_spec_file, cleaned_spec_file, nmedian=5):
 
 
 
-def rest_and_rebin(spec_file, targ_tbl):
-    pass
+def rest_and_rebin(spec_file, targ_tbl, outfile, wvpar=(4000., 8000., 4000), debug=False):
+    # Load
+    specz = np.load(spec_file)
+    flux = specz['flux']
+    wave = specz['wave']
+
+    # New Wavelength array (rest-frame)
+    common_wave = np.exp(np.linspace(np.log(wvpar[0]), np.log(wvpar[1]), wvpar[2]))
+    dv = (common_wave[1]-common_wave[0])/common_wave[0] * 3e5
+    print("Pixels have dv={} km/s".format(dv))
+
+    # Final spec
+    specs_final = np.zeros((flux.shape[0], wvpar[2]))
+    keep = np.ones(flux.shape[0], dtype=bool)
+
+    if debug:
+        istart = flux.shape[0]-100
+    else:
+        istart = 0
+    # Loop
+    for i in range(istart, flux.shape[0]):
+        if (i % 1000 == 0):
+            print('rest_and_rebin: i = ', i)
+        # Bad spectrum?
+        if np.all(flux[i] == 0):
+            print('Bad spectrum: {}'.format(i))
+            keep[i] = False
+            continue
+        # Proceed, moving to rest
+        z = targ_tbl['Z'][i]
+        specs_final[i] = rebin(wave[i]/(1+z), flux[i], common_wave)
+        if debug:
+            plt.clf()
+            ax = plt.gca()
+            ax.plot(wave[i]/(1+z), flux[i], 'k-', drawstyle='steps-mid')
+            ax.plot(common_wave, specs_final[i], 'b-', drawstyle='steps-mid')
+            plt.show()
+            embed(header='175 of preproc')
+
+    # Save
+    np.savez_compressed(outfile, flux=specs_final[keep,:], wave=common_wave, overwrite=True)
+    print("Wrote: {:d} good spectra to {:s}".format(np.sum(keep), outfile))
+
 
 
 def rebin(wavelength, flux, new_wavelength):
@@ -166,26 +219,18 @@ def rebin(wavelength, flux, new_wavelength):
 
     """
     # TODO -- Add inline comments
-    #c = 2.9979246e8
-    #dlnlambda = np.log(1 + v / c)
-    #wavelength = 10 ** sightline.loglam
-    #max_wavelength = wavelength[-1]
-    #min_wavelength = wavelength[0]
-    #pixels_number = int(np.round(np.log(max_wavelength / min_wavelength) / dlnlambda)) + 1
-    #new_wavelength = wavelength[0] * np.exp(dlnlambda * np.arange(pixels_number))
-
     npix = len(wavelength)
     wvh = (wavelength + np.roll(wavelength, -1)) / 2.
     wvh[npix - 1] = wavelength[npix - 1] + \
                     (wavelength[npix - 1] - wavelength[npix - 2]) / 2.
     dwv = wvh - np.roll(wvh, 1)
     dwv[0] = 2 * (wvh[0] - wavelength[0])
-    med_dwv = np.median(dwv)
+    #med_dwv = np.median(dwv)
 
     cumsum = np.cumsum(flux * dwv)
     #cumvar = np.cumsum(sightline.error * dwv, dtype=np.float64)
 
-    fcum = interp1d(wvh, cumsum, bounds_error=False)
+    #fcum = interp1d(wvh, cumsum, bounds_error=False)
     #fvar = interp1d(wvh, cumvar, bounds_error=False)
 
     nnew = len(new_wavelength)
@@ -197,7 +242,9 @@ def rebin(wavelength, flux, new_wavelength):
     bwv[0] = new_wavelength[0] - (new_wavelength[1] - new_wavelength[0]) / 2.
     bwv[1:] = nwvh
 
-    newcum = fcum(bwv)
+    #fcum = interp1d(wvh, cumsum, bounds_error=False)
+    #newcum = fcum(bwv)
+    newcum = np.interp(bwv, wvh, cumsum)
     #newvar = fvar(bwv)
 
     new_fx = (np.roll(newcum, -1) - newcum)[:-1]
@@ -206,25 +253,10 @@ def rebin(wavelength, flux, new_wavelength):
     # Normalize (preserve counts and flambda)
     new_dwv = bwv - np.roll(bwv, 1)
     new_fx = new_fx / new_dwv[1:]
+
     # Preserve S/N (crudely)
-    med_newdwv = np.median(new_dwv)
+    #med_newdwv = np.median(new_dwv)
     #new_var = new_var / (med_newdwv / med_dwv) / new_dwv[1:]
-
-    '''
-    left = 0
-    while np.isnan(new_fx[left]) | np.isnan(new_var[left]):
-        left = left + 1
-    right = len(new_fx)
-    while np.isnan(new_fx[right - 1]) | np.isnan(new_var[right - 1]):
-        right = right - 1
-
-    test = np.sum((np.isnan(new_fx[left:right])) | (np.isnan(new_var[left:right])))
-    assert test == 0, 'Missing value in this spectra!'
-
-    sightline.loglam = np.log10(new_wavelength[left:right])
-    sightline.flux = new_fx[left:right]
-    sightline.error = new_var[left:right]
-    '''
 
     return new_fx
 
@@ -232,16 +264,21 @@ def rebin(wavelength, flux, new_wavelength):
 if __name__ == '__main__':
 
     # Files
-    high_SN_table_file = os.path.join(os.getenv('DESI_UMAP'), 'andes_glxy_zLT03.fits')
+    galxy_table_file = os.path.join(os.getenv('DESI_UMAP'), 'andes_glxy_zLT03.fits')
     spec_r_file = os.path.join(os.getenv('DESI_UMAP'), 'andes_glxy_zLT03_rspec.npz')
     spec_r_clean_file = os.path.join(os.getenv('DESI_UMAP'), 'andes_glxy_zLT03_rspec_clean.npz')
+    spec_r_final_file = os.path.join(os.getenv('DESI_UMAP'), 'andes_glxy_zLT03_rspec_final.npz')
 
     # Load galaxy table
-    high_SN = Table.read(high_SN_table_file)
+    galxy_tbl = Table.read(galxy_table_file)
 
     # Load/write em all (not just 1000)
     if False:
-        load_spec(high_SN, spec_r_file)
+        load_spec(galxy_tbl, spec_r_file)
 
     # Clean
-    clean_spec(spec_r_file, spec_r_clean_file)
+    if False:
+        clean_spec(spec_r_file, spec_r_clean_file)
+
+    # Rest/rebin
+    rest_and_rebin(spec_r_clean_file, galxy_tbl, spec_r_final_file)#, debug=True)
