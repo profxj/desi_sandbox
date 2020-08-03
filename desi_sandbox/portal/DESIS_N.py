@@ -14,7 +14,6 @@ import os
 def calcsignoise(subset = False, path = "/Volumes/My Passport for Mac/andes/tiles/",
                  outfile='/Volumes/My Passport for Mac/Huge_Table.fits',
                  plot=False, verbose=False):
-
     all_files = glob.glob(os.path.join(path,"*/*/spectra*fits"))  # takes the each spectra file
     z_files = glob.glob(os.path.join(path,"*/*/zbest*fits"))  # takes each zbest files
 
@@ -103,3 +102,13 @@ if __name__ == '__main__':
     calcsignoise(subset= True, path='/Volumes/My Passport for Mac/andes/tiles/',
                  outfile='/Volumes/My Passport for Mac/Huge_Table.fits', plot=False)
 
+idx = obs['SPECTYPE'] == 'GALAXY'
+idx_1 = idx & (obs['Z'] < 0.3)
+
+obs_idx = obs[idx_1]
+
+sort = obs_idx[np.argsort(obs_idx['S_N_r'])]
+
+sort.write('/Volumes/My Passport for Mac/OtherHuge_Table.fits', overwrite=True)
+
+sort__table = Table.read('/Volumes/My Passport for Mac/OtherHuge_Table.fits')
