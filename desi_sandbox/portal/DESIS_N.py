@@ -15,7 +15,6 @@ import os
 def calcsignoise(subset = False, path = "/Volumes/My Passport for Mac/andes/tiles/",
                  outfile='/Volumes/My Passport for Mac/Huge_Table.fits',
                  plot=False, verbose=False):
-
     all_files = glob.glob(os.path.join(path,"*/*/spectra*fits"))  # takes the each spectra file
     z_files = glob.glob(os.path.join(path,"*/*/zbest*fits"))  # takes each zbest files
 
@@ -30,7 +29,7 @@ def calcsignoise(subset = False, path = "/Volumes/My Passport for Mac/andes/tile
     sub_zfiles.sort()
 
     new_tables = []   # creates an empty table
-    for i in range(0,len(all_files):  # to go through each file, we need a for loop
+    for i in range(0,6):  # to go through each file, we need a for loop, when ready change range to len of 
         spec = Table.read(sub_files[i]) # reads the i file table
         hdul = fits.open(sub_files[i])  # opens the fit data that belongs to the i sub_file and gets the information from that file
 
@@ -104,3 +103,13 @@ if __name__ == '__main__':
     calcsignoise(subset= True, path='/Volumes/My Passport for Mac/andes/tiles/',
                  outfile='/Volumes/My Passport for Mac/Huge_Table.fits', plot=False)
 
+idx = obs['SPECTYPE'] == 'GALAXY'  
+idx_1 = idx & (obs['Z'] < 0.3) 
+
+obs_idx = obs[idx_1]
+
+sort = obs_idx[np.argsort(obs_idx['S_N_r'])]
+
+sort.write('/Volumes/My Passport for Mac/OtherHuge_Table.fits', overwrite=True)
+
+sort__table = Table.read('/Volumes/My Passport for Mac/OtherHuge_Table.fits')
