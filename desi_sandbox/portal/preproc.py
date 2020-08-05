@@ -159,6 +159,21 @@ def clean_spec(raw_spec_file, cleaned_spec_file, nmedian=5):
 
 
 def rest_and_rebin(spec_file, targ_tbl, outfile, wvpar=(4000., 8000., 4000), debug=False):
+    """
+    Shift to rest-frame and rebin to common wavelength
+
+    Writes to a single, compressed numpy file
+
+    Args:
+        spec_file (str):
+        targ_tbl (astropy.table.Table):
+        outfile (str):
+        wvpar (tuple, optional):
+        debug (bool, optional):
+
+    Returns:
+
+    """
     # Load
     specz = np.load(spec_file)
     flux = specz['flux']
@@ -198,7 +213,8 @@ def rest_and_rebin(spec_file, targ_tbl, outfile, wvpar=(4000., 8000., 4000), deb
             embed(header='175 of preproc')
 
     # Save
-    np.savez_compressed(outfile, flux=specs_final[keep,:], wave=common_wave, overwrite=True)
+    np.savez_compressed(outfile, flux=specs_final[keep,:], wave=common_wave,
+                        tab_idx=np.where(keep)[0] , overwrite=True)
     print("Wrote: {:d} good spectra to {:s}".format(np.sum(keep), outfile))
 
 
