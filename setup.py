@@ -7,7 +7,7 @@ import glob, os
 #
 from setuptools import setup, find_packages
 
-from extension_helpers import get_extensions
+#from extension_helpers import get_extensions
 #
 # Begin setup
 #
@@ -67,7 +67,7 @@ setup_keywords['package_data'] = {'desi_sandbox': data_files,
 setup_keywords['include_package_data'] = True
 
 # C code
-setup_keywords['ext_modules'] = get_extensions()
+#setup_keywords['ext_modules'] = get_extensions()
 
 #
 # Run setup command.
