@@ -27,7 +27,7 @@ def load_andes_obj(obj_dict, camera='r'):
     if os.getenv('DESI_ANDES') is not None:  # For Madalyn
         path = os.path.join(os.getenv('DESI_ANDES'), 'tiles')
     else:
-        path = '/Volumes/GoogleDrive/My Drive/andes (1)/'
+        path = '/Volumes/GoogleDrive/My Drive/andes (1)/tiles/'
     filename = os.path.join(path, file_tileid+'.fits')
 
     hdul = fits.open(filename)
