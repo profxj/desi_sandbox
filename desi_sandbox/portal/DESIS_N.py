@@ -11,8 +11,8 @@ from astropy.io import fits, ascii
 import glob
 import os
 
-def calcsignoise(subset = False, path = "/Volumes/My Passport for Mac/andes/tiles/",
-                 outfile='/Volumes/My Passport for Mac/Huge_Table.fits',
+def calcsignoise(subset = False, path = "/Volumes/GoogleDrive/My Drive/andes/tiles/",
+                 outfile='/Volumes/GoogleDrive/My Drive/Huge_Table.fits',
                  plot=False, verbose=False):
 
     all_files = glob.glob(os.path.join(path,"*/*/spectra*fits"))  # takes the each spectra file
@@ -29,7 +29,7 @@ def calcsignoise(subset = False, path = "/Volumes/My Passport for Mac/andes/tile
     sub_zfiles.sort()
 
     new_tables = []   # creates an empty table
-    for i in range(0,len(all_files)):  # to go through each file, we need a for loop
+    for i in range(0,3):  # to go through each file, we need a for loop
         spec = Table.read(sub_files[i]) # reads the i file table
         hdul = fits.open(sub_files[i])  # opens the fit data that belongs to the i sub_file and gets the information from that file
 
@@ -51,7 +51,7 @@ def calcsignoise(subset = False, path = "/Volumes/My Passport for Mac/andes/tile
 
         median_array = np.array([])  # this creates an empty array to use later
 
-        for n in range(0,len(r_flux)):  # this is to create the plot. A for loop is needed to go through each array and plot wavelength vs s/n
+        for n in range(0,500):  # this is to create the plot. A for loop is needed to go through each array and plot wavelength vs s/n
             rflux = r_flux[n,:]  # takes the i flux value one column at a time
             rivar = r_ivar[n,:]  # takes the i ivar value one column at a time
 
@@ -100,6 +100,11 @@ def calcsignoise(subset = False, path = "/Volumes/My Passport for Mac/andes/tile
 
 # Command line execution
 if __name__ == '__main__':
-    calcsignoise(subset= True, path='/Volumes/My Passport for Mac/andes/tiles/',
-                 outfile='/Volumes/My Passport for Mac/Huge_Table.fits', plot=False)
+    calcsignoise(subset=True, path='/Volumes/GoogleDrive/My Drive/andes/tiles/',
+                 outfile='/Volumes/GoogleDrive/My Drive/Huge_Table.fits', plot=False)
 
+obs = Table.read('/Volumes/GoogleDrive/My Drive/Huge_Table.fits')
+obs_by_name = obs.group_by('SPECTYPE')
+# print(obs_by_name)
+
+print(obs_by_name.groups[1])
