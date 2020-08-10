@@ -24,7 +24,10 @@ def load_andes_obj(obj_dict, camera='r'):
     ifile = str(obj_dict['PETAL_LOC']) + '-' + str(obj_dict['TILEID']) + '-' + str(obj_dict['NIGHT'])
     # this grabs the necessary element of each array and combines them to make part of our path in the next cell
     file_tileid = str(obj_dict['TILEID']) + '/' + str(obj_dict['NIGHT']) + '/coadd-'+ifile
-    path = os.path.join(os.getenv('DESI_ANDES'), 'tiles')
+    if os.getenv('DESI_ANDES') is not None:  # For Madalyn
+        path = os.path.join(os.getenv('DESI_ANDES'), 'tiles')
+    else:
+        path = '/Volumes/GoogleDrive/My Drive/andes (1)/'
     filename = os.path.join(path, file_tileid+'.fits')
 
     hdul = fits.open(filename)
